@@ -1,4 +1,4 @@
-# Tint shader compilation issue
+# Tint shader compilation issues
 
 <a name="cloning"></a>
 # Cloning the Repository
@@ -6,7 +6,7 @@
 To get the repository, use the following command:
 
 ```
-git clone --recursive https://github.com/MikhailGorobets/VolumeRender.git
+git clone https://github.com/MikhailGorobets/TintIssues.git
 ```
 
 <a name="build_and_run"></a>
