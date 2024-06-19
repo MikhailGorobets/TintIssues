@@ -1,0 +1,46 @@
+cmake_minimum_required (VERSION 3.11)
+
+FetchContent_DeclareShallowGit(
+    dawn
+    GIT_REPOSITORY         https://github.com/google/dawn.git
+    GIT_TAG                f9e2038d1c48e2870e47056724aeab51c20219ef
+)
+
+set(TINT_BUILD_AS_OTHER_OS ON  CACHE BOOL "" FORCE)
+set(TINT_BUILD_SPV_READER  ON  CACHE BOOL "" FORCE)
+set(TINT_BUILD_WGSL_WRITER ON  CACHE BOOL "" FORCE)
+set(TINT_BUILD_IR          ON  CACHE BOOL "" FORCE)
+set(TINT_BUILD_WGSL_READER ON  CACHE BOOL "" FORCE)
+
+set(TINT_BUILD_GLSL_WRITER     OFF CACHE BOOL "" FORCE)
+set(TINT_BUILD_HLSL_WRITER     OFF CACHE BOOL "" FORCE)
+set(TINT_BUILD_MSL_WRITER      OFF CACHE BOOL "" FORCE)
+set(TINT_BUILD_SPV_WRITER      OFF CACHE BOOL "" FORCE)
+set(TINT_BUILD_GLSL_VALIDATOR  OFF CACHE BOOL "" FORCE)
+
+set(TINT_BUILD_CMD_TOOLS OFF CACHE BOOL "" FORCE)
+set(TINT_BUILD_SAMPLES   OFF CACHE BOOL "" FORCE)
+set(TINT_BUILD_DOCS      OFF CACHE BOOL "" FORCE)
+set(TINT_BUILD_TESTS     OFF CACHE BOOL "" FORCE)
+
+set(DAWN_BUILD_SAMPLES  OFF CACHE BOOL "" FORCE)
+set(DAWN_ENABLE_VULKAN  OFF CACHE BOOL "" FORCE)
+set(DAWN_ENABLE_D3D11   OFF CACHE BOOL "" FORCE)
+set(DAWN_ENABLE_D3D12   OFF CACHE BOOL "" FORCE)
+set(DAWN_USE_GLFW       OFF CACHE BOOL "" FORCE)
+set(DAWN_ENABLE_NULL    OFF CACHE BOOL "" FORCE)
+set(DAWN_USE_WINDOWS_UI OFF CACHE BOOL "" FORCE) 
+
+set(DAWN_SPIRV_TOOLS_DIR   "${spirv-tools_SOURCE_DIR}"   CACHE STRING "Directory in which to find SPIRV-Tools"   FORCE)
+set(DAWN_SPIRV_HEADERS_DIR "${SPIRV-Headers_SOURCE_DIR}" CACHE STRING "Directory in which to find SPIRV-Headers" FORCE)
+set(DAWN_ABSEIL_DIR        "${abseil-cpp_SOURCE_DIR}"    CACHE STRING "Directory in which to find Abseil"        FORCE)
+
+FetchContent_MakeAvailable(dawn)
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(tint_api PRIVATE -Wno-switch-default)
+endif()
+
+FetchContent_GetProperties(dawn SOURCE_DIR dawn_SOURCE_DIR)
+FetchContent_GetProperties(tint SOURCE_DIR tint_SOURCE_DIR)
+

@@ -38,8 +38,11 @@ function(set_directory_root_folder _DIRECTORY _ROOT_FOLDER)
     endforeach()
 endfunction()
 
+add_subdirectory(Vulkan-Headers EXCLUDE_FROM_ALL)
+set_directory_root_folder("Vulkan-Headers" "ThirdParty/Vulkan-Headers")
+
 add_subdirectory(SPIRV-Headers EXCLUDE_FROM_ALL)
-set_directory_root_folder("SPIRV-Headers" "ThirdPartySPIRV-Headers")
+set_directory_root_folder("SPIRV-Headers" "ThirdParty/SPIRV-Headers")
 
 add_subdirectory(SPIRV-Tools EXCLUDE_FROM_ALL)
 set_directory_root_folder("SPIRV-Tools" "ThirdParty/SPIRV-Tools")
@@ -50,5 +53,5 @@ set_directory_root_folder("glslang" "ThirdParty/glslang")
 add_subdirectory(abseil-cpp EXCLUDE_FROM_ALL)
 set_directory_root_folder("abseil-cpp" "ThirdParty/abseil-cpp")
 
-add_subdirectory(tint EXCLUDE_FROM_ALL)
-set_directory_root_folder("tint" "ThirdParty/tint")
+add_subdirectory(dawn EXCLUDE_FROM_ALL)
+set_directory_root_folder("dawn" "ThirdParty/dawn")
