@@ -9,5 +9,5 @@ FetchContent_DeclareShallowGit(
 set(ABSL_PROPAGATE_CXX_STD ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(abseil-cpp)
 
-# Hack for tint
-add_library(libabsl ALIAS absl_base)
+# Hack for dawn
+#add_library(libabsl ALIAS absl_base)
