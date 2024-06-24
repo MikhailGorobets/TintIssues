@@ -38,9 +38,6 @@ function(set_directory_root_folder _DIRECTORY _ROOT_FOLDER)
     endforeach()
 endfunction()
 
-add_subdirectory(Vulkan-Headers EXCLUDE_FROM_ALL)
-set_directory_root_folder("Vulkan-Headers" "ThirdParty/Vulkan-Headers")
-
 add_subdirectory(SPIRV-Headers EXCLUDE_FROM_ALL)
 set_directory_root_folder("SPIRV-Headers" "ThirdParty/SPIRV-Headers")
 

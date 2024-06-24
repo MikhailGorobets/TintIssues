@@ -2,8 +2,8 @@ cmake_minimum_required (VERSION 3.11)
 
 FetchContent_DeclareShallowGit(
     dawn
-    GIT_REPOSITORY         https://github.com/google/dawn.git
-    GIT_TAG                f9e2038d1c48e2870e47056724aeab51c20219ef
+    GIT_REPOSITORY         https://dawn.googlesource.com/dawn
+    GIT_TAG                b38022bb83f3fa168ab015d7532b935801ae61a2
 )
 
 set(TINT_BUILD_AS_OTHER_OS ON  CACHE BOOL "" FORCE)

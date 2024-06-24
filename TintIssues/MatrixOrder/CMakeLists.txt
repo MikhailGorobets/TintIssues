@@ -7,4 +7,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_executable(MatrixOrder main.cpp)
 
-target_link_libraries(MatrixOrder glslang libtint SPIRV)
+target_link_libraries(MatrixOrder glslang SPIRV libtint)
+
+target_include_directories(MatrixOrder PRIVATE
+        "${spirv-tools_SOURCE_DIR}"
+        "${spirv-tools_SOURCE_DIR}/include"
+        "${spirv-tools_SOURCE_DIR}/source"
+        "${spirv-tools_BINARY_DIR}"
+)

@@ -1,12 +1,26 @@
 #define ENABLE_HLSL
 
-#include <tint/tint.h>
-#include <glslang/Public/ShaderLang.h>
-#include <SPIRV/GlslangToSpv.h>
-#include <spirv-tools/optimizer.hpp>
-
 #include <iostream>
 #include <exception>
+
+#include <tint/tint.h>
+#include <glslang/Public/ShaderLang.h>
+
+#include <SPIRV/GlslangToSpv.h>
+
+#include <spirv-tools/optimizer.hpp>
+#include <spirv-tools/libspirv.hpp>
+
+#include "source/opt/ir_builder.h"
+#include "source/opt/build_module.h"
+#include "source/opt/def_use_manager.h"
+
+
+namespace spvtools::opt
+{
+class Instruction;
+class IRContext;
+} // namespace spvtools::opt
 
 struct TintInitializer
 {
@@ -85,12 +99,38 @@ void main(in VSInput VSIn,
 
 std::vector<uint32_t> OptimizeSPIRV(const std::vector<uint32_t>& SrcSPIRV, spv_target_env TargetEnv)
 {
+    std::unique_ptr<spvtools::opt::IRContext> Context = spvtools::BuildModule(TargetEnv, {}, SrcSPIRV.data(), SrcSPIRV.size());
+    if (!Context)
+        LOG_ERROR_AND_THROW("Failed to parse SPIR-V binary");
+
+    for (auto& Instruction : Context->module()->annotations())
+    {
+        if (Instruction.opcode() == spv::Op::OpMemberDecorate)
+        {
+            uint32_t TargetIdx  = Instruction.GetSingleWordInOperand(0);
+            uint32_t FieldIdx   = Instruction.GetSingleWordInOperand(1);
+            uint32_t Decoration = Instruction.GetSingleWordInOperand(2);
+
+            if (Decoration == static_cast<uint32_t>(spv::Decoration::RowMajor))
+            {
+                Instruction.SetInOperand(2, {static_cast<uint32_t>(spv::Decoration::ColMajor)});
+
+                auto* Definition = Context->get_def_use_mgr()->GetDef(TargetIdx);
+                //TODO: Ddd matrix transposition
+                std::cout << "Converted RowMajor matrix with ID: " << TargetIdx << " to ColumnMajor." << std::endl;
+            }
+        }
+    }
+
+    std::vector<uint32_t> PatchedSPIRV;
+    Context->module()->ToBinary(&PatchedSPIRV, false);
+
     spvtools::Optimizer SpirvOptimizer(TargetEnv);
     SpirvOptimizer.RegisterLegalizationPasses();
     SpirvOptimizer.RegisterPerformancePasses();
 
     std::vector<uint32_t> OptimizedSPIRV;
-    if (!SpirvOptimizer.Run(SrcSPIRV.data(), SrcSPIRV.size(), &OptimizedSPIRV))
+    if (!SpirvOptimizer.Run(PatchedSPIRV.data(), PatchedSPIRV.size(), &OptimizedSPIRV))
         OptimizedSPIRV.clear();
 
     return OptimizedSPIRV;
