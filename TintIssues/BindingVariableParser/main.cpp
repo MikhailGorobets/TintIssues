@@ -88,6 +88,14 @@ namespace HLSL
 {
 
 const std::string TestCS = R"(
+
+cbuffer Constants
+{
+    float4 g_Color;
+};
+
+StructuredBuffer<float4> g_StructuredBuffer;
+
 RWTexture2D<float4> Tex2D_0;
 RWTexture2D<float4> Tex2D_1;
 Texture2D<float4>   Tex2D;
@@ -97,8 +105,8 @@ void main(uint3 Gid : SV_GroupID,
           uint3 GTid : SV_GroupThreadID)
 {
     float4 Color = Tex2D.Load(int3(GTid.xy, 0));
-    Tex2D_0[GTid.xy] = float4(0.0, 0.0, 0.0, 1.0);
-    Tex2D_1[GTid.xy] = Color; 
+    Tex2D_0[GTid.xy] = g_Color;
+    Tex2D_1[GTid.xy] = Color + g_StructuredBuffer[0]; 
 }
 )";
 ;
@@ -189,12 +197,29 @@ std::string RamapBindingGroupLayoitsWGSL(const std::string& WGSL, const BindingR
 
     tint::ast::transform::BindingRemapper::BindingPoints BindingPoints;
 
+    auto FindAlternativeName = [](const tint::Program& Program, const tint::inspector::ResourceBinding& Binding) -> std::optional<std::string> {
+        if (Binding.resource_type == tint::inspector::ResourceBinding::ResourceType::kUniformBuffer ||
+            Binding.resource_type == tint::inspector::ResourceBinding::ResourceType::kStorageBuffer ||
+            Binding.resource_type == tint::inspector::ResourceBinding::ResourceType::kReadOnlyStorageBuffer)
+        {
+            for (const auto* Variable : Program.AST().GlobalVariables())
+            {
+                if (Variable->HasBindingPoint())
+                {
+                    const auto* SemVariable = Program.Sem().Get(Variable)->As<tint::sem::GlobalVariable>();
+                    if (SemVariable->Attributes().binding_point->group == Binding.bind_group && SemVariable->Attributes().binding_point->binding == Binding.binding)
+                        return SemVariable->Declaration()->type->identifier->symbol.Name();
+                }
+            }
+        }
+        return std::nullopt;
+    };
+
     tint::inspector::Inspector Inspector{Program};
     for (auto& EntryPoint : Inspector.GetEntryPoints())
     {
         for (auto& Binding : Inspector.GetResourceBindings(EntryPoint.name))
         {
-
             auto& BindIndices = RemapIndices.find(Binding.variable_name);
             if (BindIndices != RemapIndices.end())
             {
@@ -202,7 +227,25 @@ std::string RamapBindingGroupLayoitsWGSL(const std::string& WGSL, const BindingR
                 BindingPoints.emplace(tint::ast::transform::BindingPoint{Binding.bind_group, Binding.binding}, tint::ast::transform::BindingPoint{Group, Index});
             }
             else
-                LOG_WARNING_MESSAGE("Binding for variable '", Binding.variable_name, "' not found in the remap indices");
+            {
+                if (auto VariableName = FindAlternativeName(Program, Binding))
+                {
+                    auto& BindIndices = RemapIndices.find(*VariableName);
+                    if (BindIndices != RemapIndices.end())
+                    {
+                        auto& [Group, Index] = BindIndices->second;
+                        BindingPoints.emplace(tint::ast::transform::BindingPoint{Binding.bind_group, Binding.binding}, tint::ast::transform::BindingPoint{Group, Index});
+                    }
+                    else
+                    {
+                        LOG_WARNING_MESSAGE("Binding for variable '", Binding.variable_name, "' not found in the remap indices");
+                    }
+                }
+                else
+                {
+                    LOG_WARNING_MESSAGE("Binding for variable '", Binding.variable_name, "' not found in the remap indices");
+                }
+            }
         }
     }
 
@@ -227,9 +270,11 @@ int main(int argc, const char* argv[])
     try
     {
         BindingRemapingInfo RemapIndices;
-        RemapIndices["Tex2D_0"] = {1, 0};
-        RemapIndices["Tex2D_1"] = {1, 1};
-        RemapIndices["Tex2D"]   = {2, 0};
+        RemapIndices["Tex2D_0"]            = {1, 0};
+        RemapIndices["Tex2D_1"]            = {1, 1};
+        RemapIndices["Tex2D"]              = {2, 0};
+        RemapIndices["Constants"]          = {3, 0};
+        RemapIndices["g_StructuredBuffer"] = {3, 1};
 
         auto SPIRV = ConvertHLSLtoSPIRV(HLSL::TestCS);
         auto WGSL  = RamapBindingGroupLayoitsWGSL(ConvertSPIRVtoWGSL(SPIRV), RemapIndices);
