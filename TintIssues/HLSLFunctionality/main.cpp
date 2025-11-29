@@ -54,18 +54,19 @@ std::string ConcatenateArgs(Args... args)
 namespace HLSL
 {
 
-const std::string FillTextureCS = R"(
+const std::string FillTextureVS = R"(
 
-RWTexture2D</*format=rgba8*/ float4> g_tex2DUAV : register(u0);
-[numthreads(16, 16, 1)]
-void main(uint3 DTid : SV_DispatchThreadID)
+struct FullScreenTriangleVSOutput
 {
-	uint2 ui2Dim;
-	g_tex2DUAV.GetDimensions(ui2Dim.x, ui2Dim.y);
-	if (DTid.x >= ui2Dim.x || DTid.y >= ui2Dim.y)
-        return;
+    float4 PixelPosition : SV_Position;  // Pixel position on the screen
+    float2 TextureUV     : TEXCOORD;     // Texture UV coordinates [0,1]x[0,1]
+};
 
-	g_tex2DUAV[DTid.xy] = float4(float2(DTid.xy % 256u) / 256.0, 0.0, 1.0);
+void VSMain(uint VertexId : SV_VertexID, out FullScreenTriangleVSOutput VSOutput)
+{
+    float2 Texcoord = float2((VertexId << 1) & 2, VertexId & 2);
+    VSOutput.PixelPosition = float4(Texcoord * float2(2, -2) + float2(-1, 1), 0.0, 1);
+    VSOutput.TextureUV = Texcoord;
 }
 )";
 ;
@@ -89,11 +90,11 @@ std::vector<uint32_t> ConvertHLSLtoSPIRV(const std::string& HLSL)
 {
     GlslangInitilizer InitScope{};
 
-    glslang::TShader Shader{EShLangCompute};
+    glslang::TShader Shader{EShLangVertex};
 
     auto* pHLSL = HLSL.c_str();
     Shader.setStrings(&pHLSL, 1);
-    Shader.setEntryPoint("main");
+    Shader.setEntryPoint("VSMain");
     Shader.setEnvInput(glslang::EShSourceHlsl, Shader.getStage(), glslang::EShClientVulkan, 100);
     Shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_0);
     Shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_0);
@@ -138,7 +139,7 @@ std::string ConvertSPIRVtoWGSL(const std::vector<uint32_t>& SPIRV)
     auto Program = tint::wgsl::writer::WgslFromIR(Module.Get(), Options);
 
     if (Program != tint::Success)
-        LOG_ERROR_AND_THROW("Tint WGSL writer failure:\nGeneate: ", Program.Failure().reason, "\n");
+        LOG_ERROR_AND_THROW("Tint WGSL writer failure:\nGenerate: ", Program.Failure().reason, "\n");
     WGSL = std::move(Program.Get().wgsl);
     return WGSL;
 }
@@ -147,7 +148,7 @@ int main(int argc, const char* argv[])
 {
     try
     {
-        auto SPIRV = ConvertHLSLtoSPIRV(HLSL::FillTextureCS);
+        auto SPIRV = ConvertHLSLtoSPIRV(HLSL::FillTextureVS);
         auto WGSL  = ConvertSPIRVtoWGSL(SPIRV);
         std::cout << WGSL << "\n";
         return 0;
