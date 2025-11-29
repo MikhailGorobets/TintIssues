@@ -131,14 +131,14 @@ std::string ConvertSPIRVtoWGSL(const std::vector<uint32_t>& SPIRV)
     if (Module != tint::Success)
         LOG_ERROR_AND_THROW("Tint SPIR-V reader failure:\nParser: ", Module.Failure(), "\n");
 
-    tint::wgsl::writer::ProgramOptions Options;
+    tint::wgsl::writer::Options Options;
     Options.allow_non_uniform_derivatives = true;
     Options.allowed_features              = tint::wgsl::AllowedFeatures::Everything();
 
     auto Program = tint::wgsl::writer::WgslFromIR(Module.Get(), Options);
 
     if (Program != tint::Success)
-        LOG_ERROR_AND_THROW("Tint WGSL writer failure:\nGeneate: ", Program.Failure().reason.Str(), "\n");
+        LOG_ERROR_AND_THROW("Tint WGSL writer failure:\nGeneate: ", Program.Failure().reason, "\n");
     WGSL = std::move(Program.Get().wgsl);
     return WGSL;
 }

@@ -1,19 +1,27 @@
-macro(FetchContent_DeclareShallowGit Name GIT_REPOSITORY GitRepository GIT_TAG GitTag)
+
+# The GIT_SHALLOW option in FetchContent is buggy and does not actually perform
+# a shallow clone. This macro fixes that. Also, we do not want to clone all
+# submodules to reduce download time, therefore we add an option GIT_SUBMODULES
+# to specify which submodules should be cloned (if any).
+macro(FetchContent_DeclareShallowGit Name GIT_REPOSITORY GitRepository GIT_TAG GitTag GIT_SUBMODULES GitSubmodules)
     include(FetchContent)
+
+    # This is what it'd look like if GIT_SHALLOW was indeed working:
+    #GIT_REPOSITORY "${GitRepository}"
+    #GIT_TAG        "${GitTag}"
+    #GIT_SHALLOW     ON
+    #GIT_SUBMODULES "${GitSubmodules}"
+
+    # Manual download mode instead:
     FetchContent_Declare(
-        "${Name}"
-
-        # This is what it'd look line if GIT_SHALLOW was indeed working:
-        #GIT_REPOSITORY "${GitRepository}"
-        #GIT_TAG        "${GitTag}"
-        #GIT_SHALLOW    ON
-
-        # Manual download mode instead:
+        ${Name}
         DOWNLOAD_COMMAND
             cd "${FETCHCONTENT_BASE_DIR}/${Name}-src" &&
             git init &&
-            git fetch --depth=1 "${GitRepository}" "${GitTag}" &&
-            git reset --hard FETCH_HEAD
+            git remote add origin "${GitRepository}" &&
+            git fetch --depth=1 origin "${GitTag}" &&
+            git checkout FETCH_HEAD &&
+            git submodule update --init --recursive --depth=1 ${GitSubmodules}
     )
 endmacro()
 
@@ -46,9 +54,6 @@ set_directory_root_folder("SPIRV-Tools" "ThirdParty/SPIRV-Tools")
 
 add_subdirectory(glslang EXCLUDE_FROM_ALL)
 set_directory_root_folder("glslang" "ThirdParty/glslang")
-
-add_subdirectory(abseil-cpp EXCLUDE_FROM_ALL)
-set_directory_root_folder("abseil-cpp" "ThirdParty/abseil-cpp")
 
 add_subdirectory(dawn EXCLUDE_FROM_ALL)
 set_directory_root_folder("dawn" "ThirdParty/dawn")
