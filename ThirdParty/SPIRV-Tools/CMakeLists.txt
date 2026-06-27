@@ -8,3 +8,8 @@ FetchContent_DeclareShallowGit(
 )
 
 FetchContent_MakeAvailable(SPIRV-Tools)
+
+
+if(CMAKE_GENERATOR STREQUAL "Xcode" AND TARGET SPIRV-Tools-shared AND TARGET SPIRV-Tools-static)
+    add_dependencies(SPIRV-Tools-shared SPIRV-Tools-static)
+endif()
