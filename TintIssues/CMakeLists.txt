@@ -3,6 +3,9 @@ cmake_minimum_required (VERSION 3.19)
 add_subdirectory(HLSLFunctionality)
 set_directory_root_folder("HLSLFunctionality" "TintIssues")
 
+add_subdirectory(ConstantBufferNameCollision)
+set_directory_root_folder("ConstantBufferNameCollision" "TintIssues")
+
 # We disable these build because tint change API
 if (FALSE)
     add_subdirectory(BindingVariableParser)

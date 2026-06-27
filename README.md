@@ -27,3 +27,18 @@ navigate to the engine's root folder and run the following command:
 ```
 cmake -S . -B ./build/Win64 -G "Visual Studio 17 2022" -A x64
 ```
+
+<a name="build_and_run_macos"></a>
+## MacOS
+
+Build prerequisites:
+
+* Xcode
+* CMake 3.19 or later
+
+Use either CMake GUI or command line tool to generate build files. For example, to generate an
+Xcode project in *build/MacOS* folder, navigate to the engine's root folder and run the following command:
+
+```
+cmake -S . -B ./build/MacOS -G Xcode
+```
